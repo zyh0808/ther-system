@@ -1,25 +1,18 @@
-import React, { useState, useContext, useEffect, useImperativeHandle, forwardRef } from 'react'
-import { Form, Row, Col, Input, Button, DatePicker, Select } from 'antd'
+import  React, {useEffect} from 'react'
+import { useSelector, useDispatch } from 'react-redux'
+import { Form, Row, Col, Input, Button, DatePicker, Select, message } from 'antd'
 import { fetchTherList } from '../../api/bussiness'
-import { onChangeTherList } from '../../action/thermometer'
-import { TherContext } from '../../pages/bussiness/therList'
+import { onChangeTherList, onChangePagination, therState } from '../../store/thermometer'
 
 const { RangePicker } = DatePicker
 const { Option } = Select
 
-let SearchForm = ({ cRef, pagination }) => {
+const SearchForm = () => {
 
   const [searchForm] = Form.useForm()
-  const therContext = useContext(TherContext)
-  const [status, setStatus] = useState('0')
-
-  useImperativeHandle(cRef, () => ({
-    handleSearch: (status) => {
-      console.log(2222)
-      setStatus(status)
-      getTherList()
-    }
-  }))
+  const pagination = useSelector(state => state['therReducer'].pagination)
+  const status = useSelector(state => state['therReducer'].status)
+  const dispatch = useDispatch()
 
   async function getTherList () {
     const fieldsValues = searchForm.getFieldsValue()
@@ -29,17 +22,26 @@ let SearchForm = ({ cRef, pagination }) => {
       param: {
         status: status,
         typ: fieldsValues['typ'],
-        s_time: fieldsValues['createTime'] ? fieldsValues['createTime'][0].valueOf() / 1000 : 0,
-        e_time: fieldsValues['createTime'] ? fieldsValues['createTime'][1].valueOf() / 1000 : 0,
+        s_time: fieldsValues['createTime'] ? fieldsValues['createTime'][0].valueOf() / 1000 : undefined,
+        e_time: fieldsValues['createTime'] ? fieldsValues['createTime'][1].valueOf() / 1000 : undefined,
         tid: fieldsValues['tid']
       }
     }
-    const response = await fetchTherList(params)
-    therContext.dispatch(onChangeTherList(response.rows))
+    console.log(JSON.stringify(params))
+    try {
+      const response = await fetchTherList(params)
+      const page = Object.assign({...pagination}, {total: response.total})
+      dispatch(onChangeTherList(response.rows))
+      dispatch(onChangePagination(page))
+    } catch(err) {
+      message.error(err.msg)
+      dispatch(onChangeTherList([]))
+      dispatch(onChangePagination(therState.pagination))
+    }
   }
   useEffect(() => {
     getTherList()
-  }, [therContext.state.TableList])// eslint-disable-line react-hooks/exhaustive-deps
+  }, [pagination.current, status, pagination.pageSize])// eslint-disable-line react-hooks/exhaustive-deps
 
   const formItemLayout = {
     labelCol: {
@@ -110,4 +112,5 @@ let SearchForm = ({ cRef, pagination }) => {
     </Form>
   )
 }
-export default SearchForm = forwardRef(SearchForm)
+export default SearchForm
+// export default connect(mapStateToProps, mapDispatchToProps)(SearchForm)

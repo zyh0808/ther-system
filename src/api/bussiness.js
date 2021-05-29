@@ -8,3 +8,10 @@ export function fetchTherList (params) {
     data: params
   })
 }
+
+export function fetchCaliList (params) {
+  return service(API + '/api/at/calibration/list', {
+    method: 'POST',
+    data: params
+  })
+}

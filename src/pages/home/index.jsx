@@ -1,24 +1,41 @@
 import React, { useState } from 'react'
-import { Switch, Route } from 'react-router-dom'
-import { Layout, Menu } from 'antd'
+import {  useHistory  } from 'react-router-dom'
+import { Layout, Menu, PageHeader } from 'antd'
 import './index.less'
 import { MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons'
-import TherList from '../bussiness/therList'
-import IconFont from '../../utils/IconFont'
+import { authRoutes } from '../../router'
 
 const { Header, Sider, Content } = Layout
 
-const Home = () => {
+const Home = (props) => {
   const [collapsed, setCollapsed] = useState(false)
+  const [selectKey, setSelectKey] = useState(['1'])
+  const [title, setTitle] = useState(['温度计'])
+  const [subTitle, setSubTitle] = useState(['温度计管理列表'])
+  const history = useHistory()
+
+  const handleMenu = (menu) => {
+    const {id, path, title, subTitle} = menu
+    setSelectKey([id])
+    setTitle(title)
+    setSubTitle(subTitle)
+    history.push(path)
+  }
 
   return (
     <Layout className="home-layout">
       <Sider trigger={null} collapsible collapsed={collapsed}>
         <div className="logo" />
-        <Menu theme="dark" mode="inline" defaultSelectedKeys={['1']}>
-          <Menu.Item key="1" icon={<IconFont type = "ther-wenduji" />}>
-            温度计管理
-          </Menu.Item>
+        <Menu theme="dark" mode="inline" selectedKeys={selectKey}>
+          {
+            authRoutes.map(menu => {
+              return (
+                <Menu.Item key={menu.id} icon={menu.icon} onClick={() => handleMenu(menu)}>
+                  {menu.title}
+                </Menu.Item>
+              )
+            })
+          }
         </Menu>
       </Sider>
       <Layout className="site-layout">
@@ -27,18 +44,17 @@ const Home = () => {
             className: 'trigger',
             onClick: () =>setCollapsed(!collapsed)
           })}
+          <PageHeader title={title} backIcon={false} subTitle={subTitle}/>
         </Header>
         <Content
           className="site-layout-background"
           style={{
             margin: '24px 16px',
-            padding: 24,
-            minHeight: 280,
+            overflow:'auto',
+            minHeight: 280
           }}
         >
-          <Switch>
-            <Route path={'/'}><TherList /></Route>
-          </Switch>
+          {props.children}
         </Content>
       </Layout>
     </Layout>
