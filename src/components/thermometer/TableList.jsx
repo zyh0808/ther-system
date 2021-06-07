@@ -78,14 +78,6 @@ const columns = [
       )
     }
   }
-  // {
-  //   title: '操作',
-  //   key: 'action',
-  //   render: (text, record) => (
-  //     <Space size="middle">
-  //     </Space>
-  //   )
-  // }
 ]
 const statusList = [{ value: '0', name: '未使用' }, { value: '1', name: '释冷' }, { value: '2', name: '释冷结束' }, { value: '3', name: '开始运输' }, { value: '4', name: '签收' }]
 
@@ -94,6 +86,7 @@ const TableList = () => {
   const pagination = useSelector(state => state['therReducer'].pagination)
   const status = useSelector(state => state['therReducer'].status)
   const therList = useSelector(state => state['therReducer'].therList)
+  const isFetchTherList = useSelector(state => state['therReducer'].isFetchTherList)
   
   const dispatch = useDispatch()
 
@@ -123,7 +116,7 @@ const TableList = () => {
     <div>
       {/* <Button onClick={changeSearchStatus}>点击</Button> */}
       <StatusEl />
-      <Table columns={columns} dataSource={therList} pagination={pagination} rowKey={record => record.tid} onChange={handlePageChange} sticky className="table-list"/>
+      <Table columns={columns} dataSource={therList} pagination={pagination} rowKey={record => record.tid} onChange={handlePageChange} sticky className="table-list" loading={ isFetchTherList }/>
     </div>
   )
 }

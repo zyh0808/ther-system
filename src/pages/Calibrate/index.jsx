@@ -1,22 +1,26 @@
-import React, {useEffect} from 'react'
+import React, {useState, useEffect} from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { Form, Row, Col, Input, Button, message } from 'antd'
-import { fetchCaliList } from '../../api/bussiness'
-import { onChangeCaliList, onChangePagination, caliState } from '../../store/calibrate'
+import { Form, Row, Col, Input, Button, Upload, message } from 'antd'
+import { fetchCaliList, caliListImport } from '../../api/bussiness'
+import { onChangeCaliList, onChangePagination, onChangeIsFetchCaliList, caliState } from '../../store/calibrate'
 
 import TableList from '../../components/calibrate/TableList'
+import { importsExcel } from '../../utils/excel'
 
 const SearchForm = () => {
 
+  const [isUpload, setIsUpload] = useState(false)
   const [searchForm] = Form.useForm()
-  const pagination = useSelector(state => state['therReducer'].pagination)
+  const pagination = useSelector(state => state['caliReducer'].pagination)
   const dispatch = useDispatch()
+  const { current, pageSize } = pagination
 
   async function getCaliList () {
+    dispatch(onChangeIsFetchCaliList(true))
     const fieldsValues = searchForm.getFieldsValue()
     const params = {
-      page_num: pagination.current,
-      page_size: pagination.pageSize,
+      page_num: current,
+      page_size: pageSize,
       param: {
         tid: fieldsValues['tid']
       }
@@ -24,18 +28,20 @@ const SearchForm = () => {
     
     try {
       const response = await fetchCaliList(params)
+      dispatch(onChangeIsFetchCaliList(false))
       const page = Object.assign({...pagination}, {total: response.total})
       dispatch(onChangeCaliList(response.rows))
       dispatch(onChangePagination(page))
     } catch(err) {
       message.error(err.msg)
+      dispatch(onChangeIsFetchCaliList(false))
       dispatch(onChangeCaliList([]))
       dispatch(onChangePagination(caliState.pagination))
     }
   }
   useEffect(() => {
     getCaliList()
-  }, [pagination.current, pagination.pageSize])// eslint-disable-line react-hooks/exhaustive-deps
+  }, [current, pageSize])// eslint-disable-line react-hooks/exhaustive-deps
 
   const formItemLayout = {
     labelCol: {
@@ -50,6 +56,37 @@ const SearchForm = () => {
 
   const onFinish = (values) => {
     getCaliList()
+  }
+  const props = {
+    showUploadList: false,
+    accept: ".xls,.xlsx",
+    // fileList: fileList,
+    customRequest: (res) => {
+      setIsUpload(true)
+      const { file } = res
+      importsExcel(file)
+        .then((data) => {
+          // console.log(JSON.stringify(data))
+          const { calibrationinfo, calibrationdetailsinfo } = data
+          const sortData = calibrationinfo.map(item => {
+            const detailList = calibrationdetailsinfo.filter(info => info.tid === item.tid)
+            return {
+              ...item,
+              sub_list: detailList
+            }
+          })
+          console.log(JSON.stringify(sortData))
+          caliListImport(sortData).then(res => {
+            message.success('上传成功')
+          }).catch(err => {
+            message.error(err.msg)
+          }).finally(() => {
+            setIsUpload(false)
+          })
+        }).catch(err => {
+          message.error(err)
+        })
+      }
   }
 
   return (
@@ -82,11 +119,10 @@ const SearchForm = () => {
           >
             重置
           </Button>
-          <Button
-            style={{ margin: '0 8px' }}
-          >
-            导入
-          </Button>
+          
+          <Upload {...props}>
+            <Button style={{ margin: '0 8px' }} loading={isUpload}>导入</Button>
+          </Upload>
         </Col>
       </Row>
     </Form>

@@ -1,4 +1,5 @@
 export const therState = {
+  isFetchTherList: false,
   therList: [],
   status: '0',
   pagination: {
@@ -15,6 +16,12 @@ export const therState = {
 export const SET_THER_LIST = 'setTherList'
 export const SET_STATUS = 'setStatus'
 export const SET_PAGINATION = 'setPagination'
+export const SET_IS_FETCH_THER_LIST = 'setIsFetchTherList'
+
+export const onChangeIsFetchTherList = status => ({
+  type: SET_IS_FETCH_THER_LIST,
+  isFetchTherList: status
+})
 
 export const onChangeTherList = list => ({
   type: SET_THER_LIST,
@@ -33,6 +40,12 @@ export const onChangePagination = pagination => ({
 
 const therReducer = (state = therState, action) => {
   switch (action.type) {
+    case SET_IS_FETCH_THER_LIST:
+      const { isFetchTherList } = action
+      return {
+        ...state,
+        isFetchTherList
+      }
     case SET_THER_LIST:
       const { therList } = action
       return {

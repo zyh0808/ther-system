@@ -1,8 +1,9 @@
-import  React, {useEffect} from 'react'
+import  React, {useEffect, useState} from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { Form, Row, Col, Input, Button, DatePicker, Select, message } from 'antd'
-import { fetchTherList } from '../../api/bussiness'
-import { onChangeTherList, onChangePagination, therState } from '../../store/thermometer'
+import { Form, Row, Col, Input, Button, DatePicker, Select, message, Upload } from 'antd'
+import { fetchTherList, therListImport } from '../../api/bussiness'
+import { onChangeTherList, onChangePagination, onChangeIsFetchTherList, therState } from '../../store/thermometer'
+import { importsExcel } from '../../utils/excel'
 
 const { RangePicker } = DatePicker
 const { Option } = Select
@@ -10,11 +11,14 @@ const { Option } = Select
 const SearchForm = () => {
 
   const [searchForm] = Form.useForm()
+  // const [fileList] = useState()
+  const [isUpload, setIsUpload] = useState(false)
   const pagination = useSelector(state => state['therReducer'].pagination)
   const status = useSelector(state => state['therReducer'].status)
   const dispatch = useDispatch()
 
   async function getTherList () {
+    dispatch(onChangeIsFetchTherList(true))
     const fieldsValues = searchForm.getFieldsValue()
     const params = {
       page_num: pagination.current,
@@ -30,11 +34,13 @@ const SearchForm = () => {
     console.log(JSON.stringify(params))
     try {
       const response = await fetchTherList(params)
+      dispatch(onChangeIsFetchTherList(false))
       const page = Object.assign({...pagination}, {total: response.total})
       dispatch(onChangeTherList(response.rows))
       dispatch(onChangePagination(page))
     } catch(err) {
       message.error(err.msg)
+      dispatch(onChangeIsFetchTherList(false))
       dispatch(onChangeTherList([]))
       dispatch(onChangePagination(therState.pagination))
     }
@@ -56,6 +62,28 @@ const SearchForm = () => {
 
   const onFinish = (values) => {
     getTherList()
+  }
+  const props = {
+    showUploadList: false,
+    accept: ".xls,.xlsx",
+    // fileList: fileList,
+    customRequest: (res) => {
+      setIsUpload(true)
+      const { file } = res
+      importsExcel(file)
+        .then((data) => {
+          // console.log(JSON.stringify(data))
+          therListImport(data).then(res => {
+            message.success('上传成功')
+          }).catch(err => {
+            message.error(err.msg)
+          }).finally(() => {
+            setIsUpload(false)
+          })
+        }).catch(err => [
+          message.error(err)
+        ])
+      }
   }
 
   return (
@@ -102,11 +130,9 @@ const SearchForm = () => {
           >
             重置
           </Button>
-          <Button
-            style={{ margin: '0 8px' }}
-          >
-            导入
-          </Button>
+          <Upload {...props}>
+            <Button style={{ margin: '0 8px' }} loading={isUpload}>导入</Button>
+          </Upload>
         </Col>
       </Row>
     </Form>

@@ -1,4 +1,5 @@
 export const caliState = {
+  isFecthCaliList: false,
   caliList: [],
   pagination: {
     current: 1,
@@ -12,7 +13,13 @@ export const caliState = {
 }
 
 export const SET_CALI_LIST = 'setCaliList'
+export const SET_IS_FETCH_CALI_LIST = 'setIsFetchCaliList'
 export const SET_PAGINATION = 'setPagination'
+
+export const onChangeIsFetchCaliList = status => ({
+  type: SET_IS_FETCH_CALI_LIST,
+  isFecthCaliList: status
+})
 
 export const onChangeCaliList = list => ({
   type: SET_CALI_LIST,
@@ -31,6 +38,12 @@ const caliReducer = (state = caliState, action) => {
       return {
         ...state,
         caliList
+      }
+    case SET_IS_FETCH_CALI_LIST:
+      const { isFecthCaliList } = action
+      return {
+        ...state,
+        isFecthCaliList
       }
     case SET_PAGINATION:
       const { pagination } = action

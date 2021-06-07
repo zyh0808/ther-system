@@ -6,71 +6,79 @@ import {
   Route,
   Redirect
 } from 'react-router-dom'
-// import { IndexRoute } from 'react-router'
-import { Provider } from 'react-redux'
-import { store } from './store'
 
 import Home from './pages/Home'
 import { authRoutes, unAuthRoutes } from './router'
  
+
+const renderRoutes = (routes) => {
+  // console.log(routes)
+  return routes.map((route) => {
+    if (route.routes) {
+      return (
+      <Route path={route.path} key={route.id}>
+        { 
+          renderRoutes(route.routes)
+        }
+      </Route>
+      )
+    }
+    return (
+      <Route path={route.path} exact={route.exact} key={route.id}>
+        {
+          route.redirect ?
+            <Redirect to={route.redirect} from={route.path}/>
+            :
+            route.component
+        }
+      </Route>
+    )
+  })
+}
+
 const App = () => {
     
   return (
-    <Provider store={store}>
-      <Router>
-        <Switch>
-          <Route path={'/'} exact component={Home} >
-            <Redirect to={'/login'}/>
-          </Route>
-          <Route path={'/ther'} >
+    <Router>
+      <Switch>
+        <Route path={'/'} exact >
+          <Redirect to={'/login'}/>
+        </Route>
+        {/* <Route path={'/ther'} >
+            <Home>
+                {
+                  renderRoutes(authRoutes)
+                }
+              </Suspense> 
+            </Home>
+          </Switch>
+        </Route> */}
+        <Route path={'/admin'} >
+          <Home>
             <Switch>
-              <Home>
-                <Suspense fallback={<>loading...</>}>
-                  {
-                    authRoutes.map((route) => {
-                        if (route.routes) {
-                            return (
-                                <div key={route.id}>
-                                    {
-                                        route.routes.map((r) => (
-                                            <Route path={r.path} exact={r.exact} key={r.id}>
-                                                {r.component}
-                                            </Route>
-                                        ))
-                                    }
-                                </div>
-                            )
-                        }
-                        return (
-                            <Route path={route.path} exact={route.exact} key={route.id}>
-                                {
-                                    route.redirect ?
-                                        <Redirect to={route.redirect} from={route.path}/>
-                                        :
-                                        route.component
-                                }
-                            </Route>
-                        )
-                    })
-                  }
-                </Suspense>
-              </Home>
+              <Suspense fallback={<>loading...</>}>
+                {
+                  renderRoutes(authRoutes)
+                }
+              </Suspense>
             </Switch>
-          </Route>
-          <Route>
+          </Home>
+        </Route>
+        <Suspense fallback={<></>}>
+          <Switch>
             {
               unAuthRoutes.map((route) => (
                 <Route path={route.path} key={route.id} exact={route.exact}>
-                    {
-                        route.component
-                    }
+                  {
+                    route.component
+                  }
                 </Route>
-            ))
+              ))
             }
-          </Route>
-        </Switch>
-      </Router>
-    </Provider>
+          </Switch>
+        </Suspense>
+      </Switch>
+    </Router>
   )
 }
 

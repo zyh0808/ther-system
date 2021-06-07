@@ -1,0 +1,7 @@
+{
+  "presets": [],
+  "plugins": [
+    "transform-runtime", 
+    ["import", { "libraryName": "redux-persist", "libraryDirectory": "es"}, "redux-persist"]
+  ]
+}
